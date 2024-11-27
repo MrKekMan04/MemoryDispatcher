@@ -5,6 +5,7 @@ import ru.vitaliyefimov.memorydispatcher.process.Process;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,12 +35,14 @@ public class MemoryManager {
             pages.stream()
                     .filter(Page::isFree)
                     .findFirst()
+                    .or(() -> {
+                        swapPages();
+                        return Optional.empty();
+                    })
                     .ifPresent(page -> {
                         page.allocateTo(process);
                         LOGGER.info("Allocated page %d to process %d".formatted(page.getId(), process.getProcessId()));
                     });
-
-            swapPages();
         } finally {
             lock.unlock();
         }
